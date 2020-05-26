@@ -1,58 +1,41 @@
 #! /bin/bash
 
 # command line inputs
-SEQUENCE=$1 # sequence folder
-F=${2:-1}   # first frame (optional: default 1)
-L=${3:-0}   # last frame  (optional: default all frames)
+IN_SEQUENCE=$1 # path to input sequence (printf format)
+F=$2           # first frame (optional: default 1)
+L=$3           # last frame  (optional: default all frames)
+OUT_FOLDER=$4  # output folder
 
 # parameters of preprocessing
-REMOVE_OUTLIERS=${4:-0}
-REMOVE_FPN=${5:-0}
-
-# toggle stabilization
-STABILIZE=${6:-1}
+REMOVE_OUTLIERS=${5:-0}  # FIXME - deprecated
+REMOVE_FPN=${6:-0}       # FIXME - deprecated
 
 # toggle deblurring
 DEBLUR=${7:-0}
 
 # check correct number of input args
-if [ "$#" -lt 1 ]; 
+if [ "$#" -lt 4 ]; 
 then
-	echo "Usage: $0 sequence-folder first-frame last-frame" >&2
+	echo "Usage: $0 sequence-path first-frame last-frame output-folder" >&2
 	echo "See source for more command line options."
 	exit 1
 fi
 
 
-echo "Running full pipeline for sequence $SEQUENCE"
-echo "		- outlier removal is $REMOVE_OUTLIERS"
-echo "		- fixed noise removal is $REMOVE_FPN"
-echo "		- stabilization is $STABILIZE"
-echo "		- debluring is $DEBLUR"
+echo "Running full pipeline for sequence $IN_SEQUENCE"
 
-export PATH=`pwd`/bin/:$PATH
+# stabilize sequence using affinities (-t 6)
+STAB_SEQ="$OUT_FOLDER/stab-t6/%05d.png"
+./20_stabilize_video.sh $IN_SEQUENCE $F $L $STAB_SEQ "-t 6"
 
+# compute forward optical flow with default parameters
+OFLOW_SEQ="$OUT_FOLDER/tvl1flow/%05d.flo"
+./30_compute_tvl1_flow.sh $STAB_SEQ $F $L $OFLOW_SEQ "fwd"
 
-./10_preprocess_noise.sh $SEQUENCE $F $L $REMOVE_OUTLIERS $REMOVE_FPN
-./20_stabilize_video.sh $SEQUENCE $F $L $STABILIZE
-./30_compute_optical_flow.sh $SEQUENCE $F $L
-./40_run_denoising.sh $SEQUENCE $F $L "kalman"
-./40_run_denoising.sh $SEQUENCE $F $L "rbilf"
 if [ $DEBLUR -eq 1 ];
 then
+	# TODO
 	./50_run_deblurring.sh $SEQUENCE $F $L "kalman"
 	./50_run_deblurring.sh $SEQUENCE $F $L "rbilf"
-
-	# NOTE: for the moment we don't have an automatic selection of the
-	#       tonemapping parameters. Instead, we have chosen manually
-	#       a parameter for each sequence. To tonemap the sequences, you
-	#       can 60_run_tonemapping.sh with the parameters given in
-	#       run_all_tonemappings.
-
-#	./60_run_tonemapping.sh $SEQUENCE $F $L "5_deblurring" "kalman"
-#	./60_run_tonemapping.sh $SEQUENCE $F $L "5_deblurring" "rbilf"
-else
-#	./60_run_tonemapping.sh $SEQUENCE $F $L "4_denoising" "kalman"
-#	./60_run_tonemapping.sh $SEQUENCE $F $L "4_denoising" "rbilf"
 fi
 

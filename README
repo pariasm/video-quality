@@ -1,28 +1,25 @@
-PROCESSING PIPELINE
-===================
+VIDEO QUALITY EVALUATION PIPELINE
+=================================
 
-This a video processing pipeline with the objective of enhancing the quality of a video. 
-The pipeline has the following steps:
+This a video processing pipeline with the objective of evaluating the quality of a video. 
+The current version has two steps:
 
-1/ Noise preprocessing
+1 Stabilization
+2 TVL1 Optical flow computation
+
+
+There's additional code in the src/ folder for the following:
+
 	- impulse noise removal
-	- fixed pattern noise
+	- fixed pattern noise removal
 	- column/row noise removal
-
-2/ Stabilization
-
-3/ Optical flow computation
-	- TVL1 optical flow
 	- occlusion detection
-
-4/ Denoising with on of the following algorithms:
-	- VBM3D
-	- Recursive bilateral filter
-	- Patch Kalman filter
-
-5/ Video deblurring
-
-6/ Tone-mapping
+	- AWGN Denoising with on of the following algorithms:
+		- VBM3D
+		- Recursive bilateral filter
+		- Patch Kalman filter
+	- FBA video deblurring
+	- Tone-mapping
 
 
 
@@ -52,21 +49,21 @@ Some minimal rules:
 	* src/ contains the source code. There is a folder for each step
 
 
-Folder structure
-----------------
+Suggested folder structure
+--------------------------
 
 vpp
 ├── input_data                # read only; not in repo
-│   ├── b2_vol21_passe6 
-│   │   ├── f0000.png         # NOTE: you have to use these filenames!
-│   │   ├── f0001.png
+│   ├── SEQ1
+│   │   ├── 0000.png
+│   │   ├── 0001.png
 │   │   ...
-│   ├── b3_vol21_passe6
-│   │   ├── f0000.png
-│   │   ├── f0001.png
+│   ├── SEQ1
+│   │   ├── 0000.png
+│   │   ├── 0001.png
 │   │   ...
 │   ...
-├── output_data               # read/write; created by pipeline execution
+├── output_data
 │   ├── 1_preprocessing       # outputs of step 1
 │   │   ├── b2_vol21_passe6
 │   │   ├── b3_vol21_passe6
